@@ -35,3 +35,6 @@
 .idea/
 CMakeLists.txt
 cmake-build-debug/
+
+#repl.it is stupid
+main
