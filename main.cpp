@@ -1,5 +1,7 @@
 #include <iostream>
 #include <fstream>
+#include <valarray>
+#include <cstring>
 
 using namespace std;
 
@@ -18,18 +20,22 @@ using namespace std;
 #define BLOCK_COUNT 25
 #define LINE_COUNT 100
 
+#define INPUT_FILE_NAME "/home/aleksei/Projects/lab1/inp"
+#define OUTPUT_FILE_NAME "oup"
 
+
+#pragma region types
 
 /*
  * Блок описания типов
  *
 */
 
-using block_t = char[BLOCK_LENGTH];
+using block_t = char[BLOCK_LENGTH+1];
 
 struct partOfNum
 {
-	unsigned char count;
+	int count;
 	block_t blocks[BLOCK_COUNT];
 };
 
@@ -39,6 +45,10 @@ struct number
 	partOfNum inter;
 	partOfNum fact;
 };
+
+#pragma endregion types
+
+#pragma region general_functions
 
 /*
  * Блок описания внутренних функций
@@ -66,6 +76,10 @@ char getDigitRepr(int IDigit)
 	
 }
 
+#pragma endregion general_functions
+
+
+#pragma region block_functions
 
 /*
  * Блок описания функций работы с блоками
@@ -73,7 +87,7 @@ char getDigitRepr(int IDigit)
 */
 
 
-block_t* blockAdd(block_t term1, block_t term2, bool *transfer)
+block_t* blockAdd(block_t term1, block_t term2, bool &transfer)
 {
 	/*
 	 * Функция складывает блоки term1 и term2 с переносом transfer
@@ -85,7 +99,7 @@ block_t* blockAdd(block_t term1, block_t term2, bool *transfer)
 	
 }
 
-block_t* blockSub(block_t min, block_t sub, bool *transfer)
+block_t* blockSub(block_t min, block_t sub, bool &transfer)
 {
 	/*
 	 * Функция вычитает из блока min блок sub с заемом transfer
@@ -96,6 +110,11 @@ block_t* blockSub(block_t min, block_t sub, bool *transfer)
 	// TODO
 	
 }
+
+#pragma endregion block_functions
+
+
+#pragma region part_number_functions
 
 /*
  * Блок описания функций для работы с частяли чисел
@@ -122,7 +141,7 @@ partOfNum subInter(partOfNum min, partOfNum sub, bool transfer)
 	
 }
 
-partOfNum addfact(partOfNum term1, partOfNum term2, bool transfer)
+partOfNum addFact(partOfNum term1, partOfNum term2, bool transfer)
 {
 	/*
 	 * Функция для сложения дробных частей чисел
@@ -132,7 +151,7 @@ partOfNum addfact(partOfNum term1, partOfNum term2, bool transfer)
 	
 }
 
-partOfNum subfact(partOfNum min, partOfNum sub, bool transfer)
+partOfNum subFact(partOfNum min, partOfNum sub, bool transfer)
 {
 	/*
 	 * Функция для вычитания дробных частей чисел
@@ -142,6 +161,11 @@ partOfNum subfact(partOfNum min, partOfNum sub, bool transfer)
 	
 }
 
+
+#pragma endregion part_number_functions
+
+
+#pragma region abs_number_functions
 
 /*
  * Блок описания функций для работы с модулями чисел
@@ -168,6 +192,22 @@ number subAbs(number min, number sub)
 	
 }
 
+void normalize(number &numb)
+{
+	/*
+	 * Функция реформатирования числа (пересчет количества блоков)
+	*/
+	
+	// TODO
+	
+}
+
+
+#pragma endregion abs_number_functions
+
+
+#pragma region number_functions
+
 /*
  * Блок описания функций для работы с числами
  *
@@ -193,34 +233,84 @@ number subNum(number min, number sub)
 	
 }
 
-number readNum(/* char numb string numb,  */)
+number readNum(string numb, bool &Error)
 {
 	/*
 	 * Функция считывания числа
 	*/
+	//if ()
+	
+	
+	
 	
 	// TODO
-	
 }
 
-number printNum(/* char numb string numb,  */)
+number printNum(number numb)
 {
 	/*
 	 * Функция вывода числа
 	*/
 	
-	// TODO
+	cout << (numb.sign ? '-' : '+');
+	// cout << numb.inter.count << '/';
+	for (int i = numb.inter.count; i >= 0 ; --i)
+	{
+		cout << numb.inter.blocks[i];
+	}
+	cout << '.';
+	// cout << numb.fact.count << '/';
+	for (int i = numb.fact.count; i >= 0 ; --i)
+	{
+		cout << numb.fact.blocks[i];
+	}
+	cout  << endl;
 	
+	//TODO не зависит от count
 }
 
+#pragma endregion number_functions
 
 
 int main() {
-	ifstream fout;
-	fout.open("inp");
+	ifstream inpFile;
+	inpFile.open(INPUT_FILE_NAME);
+	
+	string line;
+	
+	
+	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
+	
 
-	cout << __cplusplus << endl;
+	getline(inpFile, line, '\n');
+	
+	
+	
+	
+	/*using block_t = char[BLOCK_LENGTH];
 
-	fout.close();
+struct partOfNum
+{
+	unsigned char count;
+	block_t blocks[BLOCK_COUNT];
+};
+
+struct number
+{
+	bool sign;
+	partOfNum inter;
+	partOfNum fact;
+};*/
+	
+	number n = {true, {2, {"5678", "1234", "1234"}}, {2, {"4567", "0123"}}};
+	
+/*
+	n.inter.count = 1;
+	strcpy(n.inter.blocks[0], "1234");
+*/
+	
+	printNum(n);
+	
+	inpFile.close();
 	return 0;
 }
