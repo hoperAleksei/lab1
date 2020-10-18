@@ -60,7 +60,7 @@ int getDigitWeight(char CDigit)
 	 * Функция получает для каждой цифры типа char ее вес (значение) в int
 	*/
 	
-	string validDigits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const string validDigits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	return validDigits.find(CDigit);
 }
 
@@ -70,13 +70,12 @@ char getDigitRepr(int IDigit)
 	 * Функция получает для каждой цифры типа int ее представление в char
 	*/
 	
-	string validDigits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const string validDigits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	return validDigits[IDigit];
 }
 
 
 #pragma endregion general_functions
-
 
 #pragma region block_functions
 
@@ -85,8 +84,38 @@ char getDigitRepr(int IDigit)
  *
 */
 
+bool compareBlocks(block_t a, block_t b)
+{
+	/*
+	 * Сравнивает блоки a и b, если a > b возвращает true
+	*/
+	
+	if (strlen(a) > strlen(b))
+	{
+		return true;
+	}
+	else
+	{
+		for (int i = 0; i < BLOCK_LENGTH; ++i)
+		{
+			if (a[i] == '\0')
+			{
+				break;
+			}
+			if (a[i] > b[i])
+			{
+				return true;
+			}
+			else if (b[i] > a[i])
+			{
+				return false;
+			}
+		}
+	}
+	return false;
+}
 
-block_t* blockAdd(block_t term1, block_t term2, bool &transfer)
+void blockAdd(block_t term1, block_t term2, bool &transfer, block_t &res)
 {
 	/*
 	 * Функция складывает блоки term1 и term2 с переносом transfer
@@ -94,11 +123,16 @@ block_t* blockAdd(block_t term1, block_t term2, bool &transfer)
 	 * если происходит переполнение блока, то transfer = true
 	*/
 	
-	// TODO
-	
+	int sum = 0;
+	for (int i = BLOCK_LENGTH-1; i>=0; --i)
+	{
+		sum = getDigitWeight(term1[i]) + getDigitWeight(term2[i]) + (transfer ? 1 : 0);
+		res[i] = getDigitRepr(sum % BASE);
+		transfer = (bool) (sum / BASE);
+	}
 }
 
-block_t* blockSub(block_t min, block_t sub, bool &transfer)
+void blockSub(block_t min, block_t sub, bool &transfer, block_t &res)
 {
 	/*
 	 * Функция вычитает из блока min блок sub с заемом transfer
@@ -106,12 +140,24 @@ block_t* blockSub(block_t min, block_t sub, bool &transfer)
 	 * если происходит недостаток блока, то transfer = true
 	*/
 	
-	// TODO
-	
+	int diff = 0;
+	for (int i = BLOCK_LENGTH-1; i>=0; --i)
+	{
+		diff = getDigitWeight(min[i]) - getDigitWeight(sub[i]) - (transfer ? 1 : 0);
+		if (diff < 0)
+		{
+			transfer = true;
+			diff += BASE;
+		}
+		else
+		{
+			transfer = false;
+		}
+		res[i] = getDigitRepr(diff);
+	}
 }
 
 #pragma endregion block_functions
-
 
 #pragma region part_number_functions
 
@@ -163,13 +209,63 @@ partOfNum subFact(partOfNum min, partOfNum sub, bool transfer)
 
 #pragma endregion part_number_functions
 
-
 #pragma region abs_number_functions
 
 /*
  * Блок описания функций для работы с модулями чисел
  *
 */
+
+bool compareNumbers(number a, number b)
+{
+	/*
+	 * Сравнивает модули чисел a и b, если a > b возвращает true
+	*/
+	
+	if (a.inter.count > b.inter.count)
+	{
+		return true;
+	}
+	else if (a.inter.count < b.inter.count)
+	{
+		return false;
+	}
+	else
+	{
+		for (int i = a.inter.count-1; i >= 0; --i)
+		{
+			if (compareBlocks(a.inter.blocks[i], b.inter.blocks[i]))
+			{
+				return true;
+			}
+			else if (compareBlocks(b.inter.blocks[i], a.inter.blocks[i]))
+			{
+				return false;
+			}
+		}
+		int i, j;
+		for (i = a.fact.count-1, j = b.fact.count-1; (i >= 0) && (j >= 0); --i, --j)
+		{
+			if (compareBlocks(a.fact.blocks[i], b.fact.blocks[j]))
+			{
+				return true;
+			}
+			else if (compareBlocks(b.fact.blocks[j], a.fact.blocks[i]))
+			{
+				return false;
+			}
+		}
+		cout << i << ' ' << j << endl;
+		if ((i >= 0) && (j < 0))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+}
 
 number addAbs(number term1, number term2)
 {
@@ -204,7 +300,6 @@ void normalize(number &numb)
 
 #pragma endregion abs_number_functions
 
-
 #pragma region number_functions
 
 /*
@@ -238,7 +333,7 @@ number subNum(number min, number sub)
 void errorThrow(bool &error, int len, int dot)
 {
 	error = true;
-	cout << "Error!!!\tLen: " << len << " dot pos: " << dot << endl;
+	cout << "Error!\tLen: " << len << ", Dot pos: " << dot << endl;
 }
 
 void checkBlock(block_t block, bool &error)
@@ -363,7 +458,7 @@ number readNum(string numb, bool &error)
 			}
 			else
 			{
-				SInter = numb.substr(1, dot);
+				SInter = numb.substr(1, dot-1);
 				res.sign = true;
 			}
 		}
@@ -390,11 +485,9 @@ number readNum(string numb, bool &error)
 			{
 				errorThrow(error, len, dot);
 			}
-			
 			return res;
 		}
 	}
-	// TODO
 }
 
 void printNum(number numb)
@@ -428,12 +521,12 @@ int main() {
 	ifstream inpFile;
 	inpFile.open(INPUT_FILE_NAME);
 	
-	string line;
+	//string line;
 	
 	bool error = false;
 	
-	number n;
-	
+	/*number n;
+	number nn;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
 	while (! inpFile.eof())
@@ -441,15 +534,22 @@ int main() {
 		error = false;
 		getline(inpFile, line, '\n');
 		n = readNum(line, error);
+		getline(inpFile, line, '\n');
+		nn = readNum(line, error);
+		
+		cout << compareNumbers(n, nn) << endl;
+		
 		if (!error)
 		{
 			printNum(n);
 		}
 		else
 		{
-			cout << "ERROR!!!" << line << endl;
+			//cout << "ERROR!!!" << line << endl;
 		}
-	}
+	}*/
+	
+	
 	
 	//number n = {true, {2, {"5678", "1234", "1234"}}, {2, {"4567", "0123"}}};
 	
@@ -460,7 +560,17 @@ int main() {
 	
 	//printNum(n);
 	
+	//cout << compareBlocks("01", "10");
 	
+	block_t b;
+	block_t x = "1111";
+	block_t y = "9899";
+	
+	blockAdd(x, y, error, b);
+	cout << '=' << b << '+' << error << endl;
+	error = false;
+	blockSub(x, y, error, b);
+	cout << '=' << b << '-' << error << endl;
 	
 	inpFile.close();
 	return 0;
