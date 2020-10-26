@@ -327,6 +327,26 @@ number subNum(number min, number sub)
 	
 }
 
+bool equal(number a, number b)
+{
+	/*
+	 * Возвращает true, если a = b
+	*/
+
+	return (!(compareNumbers(a, b) || compareNumbers(b, a)) and (a.sign == b.sign);
+}
+
+bool less(number a, number b)
+{
+	/*
+	 * Возвращает true, если a < b
+	*/
+	return compareNumbers(b, a);
+}
+
+
+
+
 #pragma region functions_for_readNum
 
 
@@ -365,7 +385,7 @@ partOfNum readInter(string SInter, bool &error)
 	
 	
 	
-	if (((len > 1) && (SInter[0] == '0') || (count > BLOCK_COUNT)))
+	if ((((len > 1) && (SInter[0] == '0')) || (count > BLOCK_COUNT)))
 	{
 		error = true;
 	}
@@ -400,7 +420,7 @@ partOfNum readFact(string SFact, bool &error)
 	lastBlockLength = lastBlockLength == 0 ? BLOCK_LENGTH : lastBlockLength;
 	int count = len / BLOCK_LENGTH + (lastBlockLength == BLOCK_LENGTH ? 0 : 1);
 	
-	if (((len > 1) && (SFact[len-1] == '0') || (count > BLOCK_COUNT)))
+	if ((((len > 1) && (SFact[len-1] == '0')) || (count > BLOCK_COUNT)))
 	{
 		error = true;
 	}
@@ -533,19 +553,23 @@ int main() {
 	number nn;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
-	while (! inpFile.eof())
-	{
+	//while (! inpFile.eof())
+	//{
 		error = false;
 		getline(inpFile, line, '\n');
 		n = readNum(line, error);
-
-		printNum(n);
-
-
 		getline(inpFile, line, '\n');
 		nn = readNum(line, error);
 		
-		 cout << compareNumbers(n, nn) << endl;
+		cout << equal(n, nn) << endl;
+
+		//printNum(n);
+
+
+		//getline(inpFile, line, '\n');
+		//nn = readNum(line, error);
+		
+		// cout << compareNumbers(n, nn) << endl;
 		
 		// if (!error)
 		// {
@@ -555,7 +579,7 @@ int main() {
 		// {
 		// 	//cout << "ERROR!!!" << line << endl;
 		// }
-	}
+	//}
 	
 	
 	
