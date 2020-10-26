@@ -19,7 +19,7 @@ using namespace std;
 #define BLOCK_COUNT 25
 #define LINE_COUNT 100
 
-#define INPUT_FILE_NAME "/home/aleksei/Projects/lab1/inp"
+#define INPUT_FILE_NAME "inp"
 #define OUTPUT_FILE_NAME "oup"
 
 
@@ -244,7 +244,7 @@ bool compareNumbers(number a, number b)
 			}
 		}
 		int i, j;
-		for (i = a.fact.count-1, j = b.fact.count-1; (i >= 0) && (j >= 0); --i, --j)
+		for (i = 0, j = 0; (i <= a.fact.count-1) && (j <= b.fact.count-1); ++i, ++j)
 		{
 			if (compareBlocks(a.fact.blocks[i], b.fact.blocks[j]))
 			{
@@ -256,7 +256,7 @@ bool compareNumbers(number a, number b)
 			}
 		}
 		cout << i << ' ' << j << endl;
-		if ((i >= 0) && (j < 0))
+		if ((i <= a.fact.count-1) && (j > b.fact.count-1))
 		{
 			return true;
 		}
@@ -407,13 +407,13 @@ partOfNum readFact(string SFact, bool &error)
 	else
 	{
 	//	cout << "------===" << count << endl;
-		for(int i = count-1; i > 0; --i)
+		for(int i = 0; i < count-1; ++i)
 		{
-			strcpy(res.blocks[i], SFact.substr((count-1-i)*BLOCK_LENGTH, BLOCK_LENGTH).c_str());
+			strcpy(res.blocks[i], SFact.substr((i)*BLOCK_LENGTH, BLOCK_LENGTH).c_str());
 			checkBlock(res.blocks[i], error);
 		}
-		strcpy(res.blocks[0], SFact.substr(len-lastBlockLength).c_str());
-		checkBlock(res.blocks[0], error);
+		strcpy(res.blocks[count-1], SFact.substr(len-lastBlockLength).c_str());
+		checkBlock(res.blocks[count-1], error);
 		res.count = count;
 	}
 	/*for (int i = res.count-1; i >= 0 ; --i)
@@ -422,6 +422,8 @@ partOfNum readFact(string SFact, bool &error)
 	}
 	cout << endl;*/
 	return res;
+
+	// todo
 }
 
 
@@ -434,6 +436,8 @@ number readNum(string numb, bool &error)
 	*/
 	
 	number res;
+
+	// TODO Поменять порядок дробной части
 	
 	
 	string SInter;
@@ -504,9 +508,9 @@ void printNum(number numb)
 	}
 	cout << '.';
 	// cout << numb.fact.count << '/';
-	for (int i = numb.fact.count-1; i >= 0 ; --i)
+	for (int i = 0 ; i <= numb.fact.count-1 ; ++i)
 	{
-		cout << '(' << numb.fact.blocks[i] << ')';
+		cout << i << '(' << numb.fact.blocks[i] << ')';
 	}
 	cout  << endl;
 	
@@ -521,11 +525,11 @@ int main() {
 	ifstream inpFile;
 	inpFile.open(INPUT_FILE_NAME);
 	
-	//string line;
+	string line;
 	
 	bool error = false;
 	
-	/*number n;
+	number n;
 	number nn;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
@@ -534,20 +538,24 @@ int main() {
 		error = false;
 		getline(inpFile, line, '\n');
 		n = readNum(line, error);
+
+		printNum(n);
+
+
 		getline(inpFile, line, '\n');
 		nn = readNum(line, error);
 		
-		cout << compareNumbers(n, nn) << endl;
+		 cout << compareNumbers(n, nn) << endl;
 		
-		if (!error)
-		{
-			printNum(n);
-		}
-		else
-		{
-			//cout << "ERROR!!!" << line << endl;
-		}
-	}*/
+		// if (!error)
+		// {
+		// 	
+		// }
+		// else
+		// {
+		// 	//cout << "ERROR!!!" << line << endl;
+		// }
+	}
 	
 	
 	
@@ -562,15 +570,15 @@ int main() {
 	
 	//cout << compareBlocks("01", "10");
 	
-	block_t b;
-	block_t x = "1111";
-	block_t y = "9899";
+	// block_t b;
+	// block_t x = "1111";
+	// block_t y = "9899";
 	
-	blockAdd(x, y, error, b);
-	cout << '=' << b << '+' << error << endl;
-	error = false;
-	blockSub(x, y, error, b);
-	cout << '=' << b << '-' << error << endl;
+	// blockAdd(x, y, error, b);
+	// cout << '=' << b << '+' << error << endl;
+	// error = false;
+	// blockSub(x, y, error, b);
+	// cout << '=' << b << '-' << error << endl;
 	
 	inpFile.close();
 	return 0;
