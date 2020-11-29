@@ -14,7 +14,7 @@ using namespace std;
  *
 */
 
-#define BASE 16
+#define BASE 10
 #define BLOCK_LENGTH 4
 #define BLOCK_COUNT 25
 #define LINE_COUNT 100
@@ -333,7 +333,7 @@ bool equal(number a, number b)
 	 * Возвращает true, если a = b
 	*/
 
-	return (!(compareNumbers(a, b) || compareNumbers(b, a)) and (a.sign == b.sign);
+	return (!(compareNumbers(a, b) || compareNumbers(b, a)) && (a.sign == b.sign));
 }
 
 bool less(number a, number b)
@@ -341,7 +341,8 @@ bool less(number a, number b)
 	/*
 	 * Возвращает true, если a < b
 	*/
-	return compareNumbers(b, a);
+
+	return (((a.sign == b.sign) && (!a.sign) && compareNumbers(b, a)) || ((a.sign == b.sign) && (a.sign) && compareNumbers(a, b)) || (a.sign && !b.sign)) && (!equal(a, b));
 }
 
 
@@ -555,16 +556,16 @@ int main() {
 	
 	//while (! inpFile.eof())
 	//{
-		error = false;
-		getline(inpFile, line, '\n');
-		n = readNum(line, error);
-		getline(inpFile, line, '\n');
-		nn = readNum(line, error);
+		//error = false;
+		//getline(inpFile, line, '\n');
+		//n = readNum(line, error);
+		//getline(inpFile, line, '\n');
+		//nn = readNum(line, error);
 		
-		cout << equal(n, nn) << endl;
+		//cout << equal(n, nn) << endl;
 
 		//printNum(n);
-
+		
 
 		//getline(inpFile, line, '\n');
 		//nn = readNum(line, error);
@@ -604,6 +605,17 @@ int main() {
 	// blockSub(x, y, error, b);
 	// cout << '=' << b << '-' << error << endl;
 	
+
+
+	block_t b1 = "0100";
+	block_t b2 = "0099";
+
+	block_t res;
+
+	blockSub(b1, b2, error, res);
+
+	cout << res << endl;
+	
 	inpFile.close();
-	return 0;
+ 	return 0;
 }
