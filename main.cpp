@@ -19,8 +19,8 @@ using namespace std;
 #define BLOCK_COUNT 25
 #define LINE_COUNT 100
 
-#define INPUT_FILE_NAME "inp"
-#define OUTPUT_FILE_NAME "oup"
+#define INPUT_FILE_NAME "/home/aleksei/Projects/lab1/inp"
+#define OUTPUT_FILE_NAME "/home/aleksei/Projects/lab1/oup"
 
 
 #pragma region types
@@ -132,6 +132,73 @@ void blockAdd(block_t term1, block_t term2, bool &transfer, block_t &res)
 	}
 }
 
+void blockZerosL(block_t &blockIn)
+{
+	int len = strlen(blockIn);
+	
+	block_t buf;
+	
+	strcpy(buf, blockIn);
+	
+	for (int i = 0; i < BLOCK_LENGTH-len; ++i) {
+		blockIn[i] = '0';
+	}
+	for (int i = BLOCK_LENGTH-len, j = 0; i < BLOCK_LENGTH; ++i, ++j) {
+		blockIn[i] = buf[j];
+	}
+}
+
+void blockZerosR(block_t &blockIn)
+{
+	int len = strlen(blockIn);
+	
+	for (int i = len; i < BLOCK_LENGTH; ++i) {
+		blockIn[i] = '0';
+	}
+}
+
+void blockNormalizeL(block_t &blockIn)
+{
+	block_t buf;
+	int i = 0;
+	int len = strlen(blockIn);
+	
+	for (;i < len; ++i)
+	{
+		if (blockIn[i] != '0')
+		{
+			break;
+		}
+	}
+	int j = 0;
+	for (; i < len, j < len; ++j, ++i)
+	{
+		buf[j] = blockIn[i];
+	}
+	buf[j] = '\0';
+	
+	strcpy(blockIn, buf);
+}
+
+void blockNormalizeR(block_t &blockIn)
+{
+	int len = strlen(blockIn);
+	int i = len - 1;
+	
+	for (;i>=0; --i)
+	{
+		//cout << i << ' ' << blockIn[i] << endl;
+		if (blockIn[i] != '0')
+		{
+			break;
+		}
+		else
+		{
+			blockIn[i] = '\0';
+		}
+	}
+}
+
 void blockSub(block_t min, block_t sub, bool &transfer, block_t &res)
 {
 	/*
@@ -171,6 +238,20 @@ partOfNum addInter(partOfNum term1, partOfNum term2, bool transfer)
 	/*
 	 * Функция для сложения целых частей чисел
 	*/
+	
+	if (term2.count > term1.count)
+	{
+		partOfNum buf;
+		buf = term1;
+		term1 = term2;
+		term2 = buf;
+	}
+	
+	/*for (int i = 0; i < term2.count-1; ++i) {
+	
+	}*/
+	
+	// !!!TODO учесть равное количество блоков, продолжить вторым циклом
 	
 	// TODO
 	
@@ -332,7 +413,7 @@ bool equal(number a, number b)
 	/*
 	 * Возвращает true, если a = b
 	*/
-
+	
 	return (!(compareNumbers(a, b) || compareNumbers(b, a)) && (a.sign == b.sign));
 }
 
@@ -341,7 +422,7 @@ bool less(number a, number b)
 	/*
 	 * Возвращает true, если a < b
 	*/
-
+	
 	return (((a.sign == b.sign) && (!a.sign) && compareNumbers(b, a)) || ((a.sign == b.sign) && (a.sign) && compareNumbers(a, b)) || (a.sign && !b.sign)) && (!equal(a, b));
 }
 
@@ -394,7 +475,7 @@ partOfNum readInter(string SInter, bool &error)
 	{
 		strcpy(res.blocks[count-1], SInter.substr(0, lastBlockLength).c_str());
 		checkBlock(res.blocks[count-1], error);
-	//	cout << SInter.substr(0, lastBlockLength).c_str() << ' ' << count << endl;
+		//	cout << SInter.substr(0, lastBlockLength).c_str() << ' ' << count << endl;
 		for(int i = count-2; i >=0; --i)
 		{
 			//cout << i;
@@ -427,7 +508,7 @@ partOfNum readFact(string SFact, bool &error)
 	}
 	else
 	{
-	//	cout << "------===" << count << endl;
+		//	cout << "------===" << count << endl;
 		for(int i = 0; i < count-1; ++i)
 		{
 			strcpy(res.blocks[i], SFact.substr((i)*BLOCK_LENGTH, BLOCK_LENGTH).c_str());
@@ -443,8 +524,6 @@ partOfNum readFact(string SFact, bool &error)
 	}
 	cout << endl;*/
 	return res;
-
-	// todo
 }
 
 
@@ -457,8 +536,6 @@ number readNum(string numb, bool &error)
 	*/
 	
 	number res;
-
-	// TODO Поменять порядок дробной части
 	
 	
 	string SInter;
@@ -472,6 +549,10 @@ number readNum(string numb, bool &error)
 	if ((len == 0) || (dot == -1) || (dot == 0) || (dot+1 == len))
 	{
 		errorThrow(error, len, dot);
+		res.sign = false;
+		res.fact.count = 0;
+		res.inter.count = 0;
+		return res;
 	}
 	else
 	{
@@ -513,6 +594,7 @@ number readNum(string numb, bool &error)
 			return res;
 		}
 	}
+	
 }
 
 void printNum(number numb)
@@ -525,7 +607,7 @@ void printNum(number numb)
 	// cout << numb.inter.count << '/';
 	for (int i = numb.inter.count-1; i >= 0 ; --i)
 	{
-		cout << '(' << numb.inter.blocks[i] << ')';
+		cout << i << '(' << numb.inter.blocks[i] << ')';
 	}
 	cout << '.';
 	// cout << numb.fact.count << '/';
@@ -554,68 +636,34 @@ int main() {
 	number nn;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
-	//while (! inpFile.eof())
-	//{
-		//error = false;
-		//getline(inpFile, line, '\n');
-		//n = readNum(line, error);
-		//getline(inpFile, line, '\n');
-		//nn = readNum(line, error);
+//	block_t b = "0010";
+//
+//	cout << b << endl;
+//
+//	blockNormalizeR(b);
+//
+//	cout << b << endl;
+
+
+	n = readNum("1234567890.12345678901", error);
+	printNum(n);
+	
+	/*while (! inpFile.eof())
+	{
+		error = false;
+		getline(inpFile, line, '\n');
+		cout << "Line: " << line << endl;
+		n = readNum(line, error);
 		
-		//cout << equal(n, nn) << endl;
-
-		//printNum(n);
+		cout << "Err = " << error << endl;
 		
-
-		//getline(inpFile, line, '\n');
-		//nn = readNum(line, error);
-		
-		// cout << compareNumbers(n, nn) << endl;
-		
-		// if (!error)
-		// {
-		// 	
-		// }
-		// else
-		// {
-		// 	//cout << "ERROR!!!" << line << endl;
-		// }
-	//}
+		printNum(n);
+		cout << endl;
 	
 	
+	}*/
 	
-	//number n = {true, {2, {"5678", "1234", "1234"}}, {2, {"4567", "0123"}}};
-	
-/*
-	n.inter.count = 1;
-	strcpy(n.inter.blocks[0], "1234");
-*/
-	
-	//printNum(n);
-	
-	//cout << compareBlocks("01", "10");
-	
-	// block_t b;
-	// block_t x = "1111";
-	// block_t y = "9899";
-	
-	// blockAdd(x, y, error, b);
-	// cout << '=' << b << '+' << error << endl;
-	// error = false;
-	// blockSub(x, y, error, b);
-	// cout << '=' << b << '-' << error << endl;
-	
-
-
-	block_t b1 = "0100";
-	block_t b2 = "0099";
-
-	block_t res;
-
-	blockSub(b1, b2, error, res);
-
-	cout << res << endl;
 	
 	inpFile.close();
- 	return 0;
+	return 0;
 }
