@@ -124,12 +124,14 @@ void blockAdd(block_t term1, block_t term2, bool &transfer, block_t &res)
 	*/
 	
 	int sum = 0;
+	res[BLOCK_LENGTH] = '\0';
 	for (int i = BLOCK_LENGTH-1; i>=0; --i)
 	{
 		sum = getDigitWeight(term1[i]) + getDigitWeight(term2[i]) + (transfer ? 1 : 0);
 		res[i] = getDigitRepr(sum % BASE);
 		transfer = (bool) (sum / BASE);
 	}
+	
 }
 
 void blockZerosL(block_t &blockIn)
@@ -208,6 +210,7 @@ void blockSub(block_t min, block_t sub, bool &transfer, block_t &res)
 	*/
 	
 	int diff = 0;
+	res[BLOCK_LENGTH] = '\0';
 	for (int i = BLOCK_LENGTH-1; i>=0; --i)
 	{
 		diff = getDigitWeight(min[i]) - getDigitWeight(sub[i]) - (transfer ? 1 : 0);
@@ -233,7 +236,7 @@ void blockSub(block_t min, block_t sub, bool &transfer, block_t &res)
  *
 */
 
-partOfNum addInter(partOfNum term1, partOfNum term2, bool transfer)
+partOfNum addInter(partOfNum term1, partOfNum term2, bool &transfer)
 {
 	/*
 	 * Функция для сложения целых частей чисел
@@ -245,19 +248,65 @@ partOfNum addInter(partOfNum term1, partOfNum term2, bool transfer)
 		buf = term1;
 		term1 = term2;
 		term2 = buf;
+	} // term2 <= term1
+	
+	block_t buf;
+	partOfNum res;
+	
+	int i = 0;
+	for (; i < term2.count-1; ++i) // сложение полных блоков
+	{
+		blockAdd(term1.blocks[i], term2.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+	}
+	blockZerosL(term2.blocks[i]);
+	if (term2.count == term1.count) // сложение первого блока у равных чисел
+	{
+		blockZerosL(term1.blocks[i]);
+		blockAdd(term1.blocks[i], term2.blocks[i], transfer, buf);
+		// возможны неожиданные ошибки
+		if (!transfer)
+		{
+			blockNormalizeL(buf);
+		}
+		strcpy(res.blocks[i], buf);
+
+	}
+	else // сложение блоков отсутствующих у одного числа
+	{
+		blockAdd(term1.blocks[i], term2.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+		i += 1;
+		block_t zero = "";
+		blockZerosL(zero);
+		for (; i < term1.count-1; ++i){
+			blockAdd(term1.blocks[i], zero, transfer, buf);
+			strcpy(res.blocks[i], buf);
+		}
+		blockZerosL(term1.blocks[i]);
+		blockAdd(term1.blocks[i], zero, transfer, buf);
+		if (!transfer)
+		{
+			blockNormalizeL(buf);
+		}
+		strcpy(res.blocks[i], buf);
+	}
+	if (transfer)
+	{
+		i += 1;
+		strcpy(res.blocks[i], "1");
 	}
 	
-	/*for (int i = 0; i < term2.count-1; ++i) {
+	res.count = i+1;
 	
-	}*/
-	
-	// !!!TODO учесть равное количество блоков, продолжить вторым циклом
-	
-	// TODO
-	
+	if ((res.count == 1) && (strlen(res.blocks[0]) == 0))
+	{
+		strcpy(res.blocks[0], "0");
+	}
+	return res;
 }
 
-partOfNum subInter(partOfNum min, partOfNum sub, bool transfer)
+partOfNum subInter(partOfNum min, partOfNum sub, bool &transfer)
 {
 	/*
 	 * Функция для вычитания целых частей чисел
@@ -280,7 +329,7 @@ partOfNum addFact(partOfNum term1, partOfNum term2, bool transfer)
 partOfNum subFact(partOfNum min, partOfNum sub, bool transfer)
 {
 	/*
-	 * Функция для вычитания дробных частей чисел
+	 * Функция для вычитания дробных частей чисел. Из min вычитается sub
 	*/
 	
 	// TODO
@@ -634,19 +683,34 @@ int main() {
 	
 	number n;
 	number nn;
+	
+	number r;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
-//	block_t b = "0010";
-//
-//	cout << b << endl;
-//
-//	blockNormalizeR(b);
-//
-//	cout << b << endl;
+	block_t b = "10";
 
+	cout << b << endl;
 
-	n = readNum("1234567890.12345678901", error);
+	blockZerosL(b);
+
+	cout << b << endl;
+	
+	
+	n = readNum("1.0", error);
+	nn = readNum("999999999999.0", error);
+	error = false;
+	
+	
+	r.inter = addInter(n.inter, nn.inter, error);
+	r.fact = n.fact;
+	r.sign = false;
+	
 	printNum(n);
+	printNum(nn);
+	
+	
+	
+	printNum(r);
 	
 	/*while (! inpFile.eof())
 	{
@@ -662,6 +726,9 @@ int main() {
 	
 	
 	}*/
+	
+	
+	
 	
 	
 	inpFile.close();
