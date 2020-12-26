@@ -14,9 +14,9 @@ using namespace std;
  *
 */
 
-#define BASE 10
+#define BASE 16
 #define BLOCK_LENGTH 4
-#define BLOCK_COUNT 5
+#define BLOCK_COUNT 10
 #define LINE_COUNT 100
 
 #define INPUT_FILE_NAME "/home/aleksei/Projects/lab1/inp"
@@ -157,7 +157,7 @@ void blockZerosR(block_t &blockIn)
 	for (int i = len; i < BLOCK_LENGTH; ++i) {
 		blockIn[i] = '0';
 	}
-	blockIn[BLOCK_LENGTH] = '/0';
+	blockIn[BLOCK_LENGTH] = '\0';
 }
 
 void blockNormalizeL(block_t &blockIn)
@@ -328,14 +328,67 @@ partOfNum subInter(partOfNum min, partOfNum sub, bool &transfer)
 	
 	int i = 0;
 	
-	for (;i <= sub.count; ++i) //вычитание полных блоков
+	for (;i < sub.count-1; ++i) // вычитание полных блоков
 	{
+		blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+	}
+	blockZerosL(sub.blocks[i]);
+	if (sub.count == min.count) // вычитание первого блока у равных чисел
+	{
+		blockZerosL(min.blocks[i]);
+		blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+		++i;
+	}
+	else
+	{
+		blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+		++i;
+		block_t zero = "";
+		blockZerosL(zero);
+		for (;i < min.count-1; ++i) // вычитание блоков пустых у sub
+		{
+			blockSub(min.blocks[i], zero, transfer, buf);
+			strcpy(res.blocks[i], buf);
+		}
+		blockZerosL(min.blocks[i]);
+		blockSub(min.blocks[i], zero, transfer, buf);
+		strcpy(res.blocks[i], buf);
+		++i;
+	}
+
+	res.count = i;
 	
+	if (transfer)
+	{
+		cout << "ERROR!!!!!!!!!!!!!! В ПРОГРАММЕ СБОЙ" << endl;
+	}
+	
+	--i;
+	for (; i >= 0; --i) // приведение числа к нормальному виду
+	{
+		blockNormalizeL(res.blocks[i]);
+		if (strlen(res.blocks[i]) != 0)
+		{
+			break;
+		}
+		else
+		{
+			if (i == 0)
+			{
+				strcpy(res.blocks[i], "0");
+			}
+			else
+			{
+				--res.count;
+			}
+		}
 	}
 	
 	
-	// TODO
-	
+	return res;
 }
 
 partOfNum addFact(partOfNum term1, partOfNum term2, bool &transfer)
@@ -378,7 +431,6 @@ partOfNum addFact(partOfNum term1, partOfNum term2, bool &transfer)
 	res.count = term1.count;
 	
 	i = res.count-1;
-	//int count = i;
 	for (; i >= 0; --i) // приведение числа к нормальному виду
 	{
 		blockNormalizeR(res.blocks[i]);
@@ -402,14 +454,89 @@ partOfNum addFact(partOfNum term1, partOfNum term2, bool &transfer)
 	return res;
 }
 
-partOfNum subFact(partOfNum min, partOfNum sub, bool transfer)
+partOfNum subFact(partOfNum min, partOfNum sub, bool &transfer)
 {
 	/*
 	 * Функция для вычитания дробных частей чисел. Из min вычитается sub
 	*/
 	
-	// TODO
+	partOfNum res;
+	block_t buf;
 	
+	block_t zero = "";
+	blockZerosR(zero);
+	
+	int i;
+	
+	if (min.count >= sub.count) // вычитание блоков отсутствующих у sub
+	{
+		i = min.count-1;
+		
+		blockZerosR(min.blocks[i]);
+		if (min.count != sub.count)
+		{
+			for (; i > sub.count-1; --i)
+			{
+				blockSub(min.blocks[i], zero, transfer, buf);
+				strcpy(res.blocks[i], buf);
+			}
+			blockZerosR(sub.blocks[i]);
+			blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+			strcpy(res.blocks[i], buf);
+			--i;
+		}
+		else
+		{
+			blockZerosR(sub.blocks[i]);
+			blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+			strcpy(res.blocks[i], buf);
+		}
+		res.count = min.count;
+	}
+	else // вычитание блоков отсутствующих у min
+	{
+		i = sub.count-1;
+		
+		blockZerosR(sub.blocks[i]);
+		for (; i > min.count-1; --i) // вычитание блоков отсутствующих у sub
+		{
+			blockSub(zero, sub.blocks[i], transfer, buf);
+			strcpy(res.blocks[i], buf);
+		}
+		blockZerosR(min.blocks[i]);
+		blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+		res.count = sub.count;
+	}
+	--i;
+	for (; i >= 0; --i) // вычитание полных блоков
+	{
+		blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+	}
+	
+	i = res.count-1;
+	for (; i >= 0; --i) // приведение числа к нормальному виду
+	{
+		blockNormalizeR(res.blocks[i]);
+		if (strlen(res.blocks[i]) != 0)
+		{
+			break;
+		}
+		else
+		{
+			if (i == 0)
+			{
+				strcpy(res.blocks[i], "0");
+			}
+			else
+			{
+				--res.count;
+			}
+		}
+	}
+	
+	return res;
 }
 
 
@@ -494,18 +621,13 @@ number subAbs(number min, number sub)
 	/*
 	 * Функция вычитания модулей чисел
 	*/
+	number res;
+	bool transfer = false;
 	
-	// TODO
+	res.fact = subFact(min.fact, sub.fact, transfer);
+	res.inter = subInter(min.inter, sub.inter, transfer);
 	
-}
-
-void normalize(number &numb)
-{
-	/*
-	 * Функция реформатирования числа (пересчет количества блоков)
-	*/
-	
-	// TODO
+	return  res;
 	
 }
 
@@ -519,7 +641,7 @@ void normalize(number &numb)
  *
 */
 
-number subNum(number min, number sub);
+number _subNum(number min, number sub);
 
 number addNum(number term1, number term2)
 {
@@ -534,13 +656,39 @@ number addNum(number term1, number term2)
 		res = addAbs(term1, term2);
 		res.sign = term1.sign;
 	}
-	else if (!term1.sign && term2.sign) // из term1 вычитаем term2
+	else if (!(!term1.sign && term2.sign)) // из term1 вычитаем term2
 	{
-		res = subNum(term2, term1);
+		res = _subNum(term2, term1);
 	}
-	else if (term1.sign && !term2.sign) // из term2 вычитаем term1
+	else if (!(term1.sign && !term2.sign)) // из term2 вычитаем term1
 	{
-		res = subNum(term1, term2);
+		res = _subNum(term1, term2);
+	}
+	
+	return res;
+}
+
+number _subNum(number min, number sub)
+{
+	/*
+	 * Функция вычитания положительных чисел (min - sub)
+	*/
+	
+	bool ind = compareNumbers(sub, min);
+	number res;
+	bool transfer;
+	
+	if (ind)
+	{
+		res.sign = true;
+		res.fact = subFact(sub.fact, min.fact, transfer);
+		res.inter = subInter(sub.inter, min.inter, transfer);
+	}
+	else
+	{
+		res.sign = false;
+		res.fact = subFact(min.fact, sub.fact, transfer);
+		res.inter = subInter(min.inter, sub.inter, transfer);
 	}
 	
 	return res;
@@ -552,10 +700,36 @@ number subNum(number min, number sub)
 	 * Функция вычитания чисел (min - sub)
 	*/
 	
+	number res;
+	
+	if (min.sign == sub.sign)
+	{
+		if (min.sign)
+		{
+			res = _subNum(sub, min);
+		}
+		else
+		{
+			res = _subNum(min, sub);
+		}
+	}
+	else
+	{
+		res = addAbs(min, sub);
+		if (min.sign)
+		{
+			res.sign = true;
+		}
+		else
+		{
+			res.sign = false;
+		}
+	}
 	
 	
 	// TODO
 	
+	return res;
 }
 
 bool equal(number a, number b)
@@ -575,8 +749,6 @@ bool less(number a, number b)
 	
 	return (((a.sign == b.sign) && (!a.sign) && compareNumbers(b, a)) || ((a.sign == b.sign) && (a.sign) && compareNumbers(a, b)) || (a.sign && !b.sign)) && (!equal(a, b));
 }
-
-
 
 
 #pragma region functions_for_readNum
@@ -752,7 +924,6 @@ void printNum(number numb)
 	/*
 	 * Функция вывода числа
 	*/
-	
 	cout << (numb.sign ? '-' : '+');
 	// cout << numb.inter.count << '/';
 	for (int i = numb.inter.count-1; i >= 0 ; --i)
@@ -788,12 +959,19 @@ int main() {
 	number r;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
-	n = readNum("0.99999999999999999999", error);
-	nn = readNum("999999999999.00000000000123430001", error);
+	n = readNum("0.0", error);
+	nn = readNum("0.0", error);
 	error = false;
+	/*
+	 * max 4 * 10 | 16
+	 * FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+	 * FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+	 *
+	 * 1..0 4 * 10 | 16
+	 * 1000000000000000000000000000000000000000.0
+	 * */
 	
-	
-	r = addAbs(n, nn);
+	r = addNum(n, nn);
 	
 	printNum(n);
 	printNum(nn);
