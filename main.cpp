@@ -16,7 +16,7 @@ using namespace std;
 
 #define BASE 10
 #define BLOCK_LENGTH 4
-#define BLOCK_COUNT 25
+#define BLOCK_COUNT 5
 #define LINE_COUNT 100
 
 #define INPUT_FILE_NAME "/home/aleksei/Projects/lab1/inp"
@@ -157,6 +157,7 @@ void blockZerosR(block_t &blockIn)
 	for (int i = len; i < BLOCK_LENGTH; ++i) {
 		blockIn[i] = '0';
 	}
+	blockIn[BLOCK_LENGTH] = '/0';
 }
 
 void blockNormalizeL(block_t &blockIn)
@@ -291,10 +292,20 @@ partOfNum addInter(partOfNum term1, partOfNum term2, bool &transfer)
 		}
 		strcpy(res.blocks[i], buf);
 	}
-	if (transfer)
+	if (transfer) // учет переноса в новый блок
 	{
-		i += 1;
-		strcpy(res.blocks[i], "1");
+		if (i >= BLOCK_COUNT-1) // учет переолнения блоков
+		{
+			/* можно переделать */
+			cout << "ERROR: переполнение" << endl;
+			i = 0;
+			strcpy(res.blocks[0], "0");
+		}
+		else
+		{
+			i += 1;
+			strcpy(res.blocks[i], "1");
+		}
 	}
 	
 	res.count = i+1;
@@ -312,18 +323,83 @@ partOfNum subInter(partOfNum min, partOfNum sub, bool &transfer)
 	 * Функция для вычитания целых частей чисел
 	*/
 	
+	partOfNum res;
+	block_t  buf;
+	
+	int i = 0;
+	
+	for (;i <= sub.count; ++i) //вычитание полных блоков
+	{
+	
+	}
+	
+	
 	// TODO
 	
 }
 
-partOfNum addFact(partOfNum term1, partOfNum term2, bool transfer)
+partOfNum addFact(partOfNum term1, partOfNum term2, bool &transfer)
 {
 	/*
 	 * Функция для сложения дробных частей чисел
 	*/
 	
-	// TODO
+	if (term2.count > term1.count)
+	{
+		partOfNum buf;
+		buf = term1;
+		term1 = term2;
+		term2 = buf;
+	} // term2 <= term1
 	
+	block_t buf;
+	partOfNum res;
+	
+	int i = term1.count-1;
+	
+	for (; i > term2.count-1; --i) // сложение блоков отсутствующих у одного числа
+	{
+		strcpy(res.blocks[i], term1.blocks[i]);
+	}
+	if (i >= 0) //сложение первого блока у равных чисел
+	{
+		blockZerosR(term1.blocks[i]);
+		blockZerosR(term2.blocks[i]);
+		blockAdd(term1.blocks[i], term2.blocks[i], transfer, buf);
+		strcpy(res.blocks[i], buf);
+		--i;
+		for (;i >= 0; --i) // сложение полных блоков
+		{
+			blockAdd(term1.blocks[i], term2.blocks[i], transfer, buf);
+			strcpy(res.blocks[i], buf);
+		}
+	}
+	
+	res.count = term1.count;
+	
+	i = res.count-1;
+	//int count = i;
+	for (; i >= 0; --i) // приведение числа к нормальному виду
+	{
+		blockNormalizeR(res.blocks[i]);
+		if (strlen(res.blocks[i]) != 0)
+		{
+			break;
+		}
+		else
+		{
+			if (i == 0)
+			{
+				strcpy(res.blocks[i], "0");
+			}
+			else
+			{
+				--res.count;
+			}
+		}
+	}
+	
+	return res;
 }
 
 partOfNum subFact(partOfNum min, partOfNum sub, bool transfer)
@@ -403,7 +479,13 @@ number addAbs(number term1, number term2)
 	 * Функция сложения модулей чисел
 	*/
 	
-	// TODO
+	number res;
+	bool transfer = false;
+	
+	res.fact = addFact(term1.fact, term2.fact, transfer);
+	res.inter = addInter(term1.inter, term2.inter, transfer);
+	
+	return  res;
 	
 }
 
@@ -437,21 +519,40 @@ void normalize(number &numb)
  *
 */
 
+number subNum(number min, number sub);
+
 number addNum(number term1, number term2)
 {
 	/*
 	 * Функция сложения чисел
 	*/
 	
-	// TODO
+	number res;
 	
+	if (term1.sign == term2.sign) // числа имеют одинаковые знаки
+	{
+		res = addAbs(term1, term2);
+		res.sign = term1.sign;
+	}
+	else if (!term1.sign && term2.sign) // из term1 вычитаем term2
+	{
+		res = subNum(term2, term1);
+	}
+	else if (term1.sign && !term2.sign) // из term2 вычитаем term1
+	{
+		res = subNum(term1, term2);
+	}
+	
+	return res;
 }
 
 number subNum(number min, number sub)
 {
 	/*
-	 * Функция вычитания чисел
+	 * Функция вычитания чисел (min - sub)
 	*/
+	
+	
 	
 	// TODO
 	
@@ -687,46 +788,18 @@ int main() {
 	number r;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
-	block_t b = "10";
-
-	cout << b << endl;
-
-	blockZerosL(b);
-
-	cout << b << endl;
-	
-	
-	n = readNum("1.0", error);
-	nn = readNum("999999999999.0", error);
+	n = readNum("0.99999999999999999999", error);
+	nn = readNum("999999999999.00000000000123430001", error);
 	error = false;
 	
 	
-	r.inter = addInter(n.inter, nn.inter, error);
-	r.fact = n.fact;
-	r.sign = false;
+	r = addAbs(n, nn);
 	
 	printNum(n);
 	printNum(nn);
 	
 	
-	
 	printNum(r);
-	
-	/*while (! inpFile.eof())
-	{
-		error = false;
-		getline(inpFile, line, '\n');
-		cout << "Line: " << line << endl;
-		n = readNum(line, error);
-		
-		cout << "Err = " << error << endl;
-		
-		printNum(n);
-		cout << endl;
-	
-	
-	}*/
-	
 	
 	
 	
