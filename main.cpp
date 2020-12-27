@@ -956,7 +956,7 @@ void printNum(number numb, ostream &stream)
 		}
 	}
 	
-	stream << (numb.sign ? '-' : '\0');
+	stream << (numb.sign ? "-" : "");
 	// cout << numb.inter.count << '/';
 	for (int i = numb.inter.count-1; i >= 0 ; --i)
 	{
