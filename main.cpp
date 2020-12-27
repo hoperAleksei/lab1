@@ -148,6 +148,7 @@ void blockZerosL(block_t &blockIn)
 	for (int i = BLOCK_LENGTH-len, j = 0; i < BLOCK_LENGTH; ++i, ++j) {
 		blockIn[i] = buf[j];
 	}
+	blockIn[BLOCK_LENGTH] = '\0';
 }
 
 void blockZerosR(block_t &blockIn)
@@ -237,7 +238,7 @@ void blockSub(block_t min, block_t sub, bool &transfer, block_t &res)
  *
 */
 
-partOfNum addInter(partOfNum term1, partOfNum term2, bool &transfer)
+partOfNum addInter(partOfNum term1, partOfNum term2, bool &transfer, bool &error)
 {
 	/*
 	 * Функция для сложения целых частей чисел
@@ -297,7 +298,8 @@ partOfNum addInter(partOfNum term1, partOfNum term2, bool &transfer)
 		if (i >= BLOCK_COUNT-1) // учет переолнения блоков
 		{
 			/* можно переделать */
-			cout << "ERROR: переполнение" << endl;
+			cerr << "ERROR: переполнение" << endl;
+			error = true;
 			i = 0;
 			strcpy(res.blocks[0], "0");
 		}
@@ -588,7 +590,7 @@ bool compareNumbers(number a, number b)
 				return false;
 			}
 		}
-		cout << i << ' ' << j << endl;
+		//cout << i << ' ' << j << endl;
 		if ((i <= a.fact.count-1) && (j > b.fact.count-1))
 		{
 			return true;
@@ -600,7 +602,7 @@ bool compareNumbers(number a, number b)
 	}
 }
 
-number addAbs(number term1, number term2)
+number addAbs(number term1, number term2, bool &error)
 {
 	/*
 	 * Функция сложения модулей чисел
@@ -610,7 +612,12 @@ number addAbs(number term1, number term2)
 	bool transfer = false;
 	
 	res.fact = addFact(term1.fact, term2.fact, transfer);
-	res.inter = addInter(term1.inter, term2.inter, transfer);
+	res.inter = addInter(term1.inter, term2.inter, transfer, error);
+	if (error)
+	{
+		strcpy(res.fact.blocks[0], "0");
+		res.fact.count = 1;
+	}
 	
 	return  res;
 	
@@ -643,7 +650,7 @@ number subAbs(number min, number sub)
 
 number _subNum(number min, number sub);
 
-number addNum(number term1, number term2)
+number addNum(number term1, number term2, bool &error)
 {
 	/*
 	 * Функция сложения чисел
@@ -653,7 +660,7 @@ number addNum(number term1, number term2)
 	
 	if (term1.sign == term2.sign) // числа имеют одинаковые знаки
 	{
-		res = addAbs(term1, term2);
+		res = addAbs(term1, term2, error);
 		res.sign = term1.sign;
 	}
 	else if (!(!term1.sign && term2.sign)) // из term1 вычитаем term2
@@ -680,21 +687,19 @@ number _subNum(number min, number sub)
 	
 	if (ind)
 	{
+		res = subAbs(sub, min);
 		res.sign = true;
-		res.fact = subFact(sub.fact, min.fact, transfer);
-		res.inter = subInter(sub.inter, min.inter, transfer);
 	}
 	else
 	{
+		res = subAbs(min, sub);
 		res.sign = false;
-		res.fact = subFact(min.fact, sub.fact, transfer);
-		res.inter = subInter(min.inter, sub.inter, transfer);
 	}
 	
 	return res;
 }
 
-number subNum(number min, number sub)
+number subNum(number min, number sub, bool &error)
 {
 	/*
 	 * Функция вычитания чисел (min - sub)
@@ -715,7 +720,7 @@ number subNum(number min, number sub)
 	}
 	else
 	{
-		res = addAbs(min, sub);
+		res = addAbs(min, sub, error);
 		if (min.sign)
 		{
 			res.sign = true;
@@ -725,9 +730,6 @@ number subNum(number min, number sub)
 			res.sign = false;
 		}
 	}
-	
-	
-	// TODO
 	
 	return res;
 }
@@ -840,11 +842,6 @@ partOfNum readFact(string SFact, bool &error)
 		checkBlock(res.blocks[count-1], error);
 		res.count = count;
 	}
-	/*for (int i = res.count-1; i >= 0 ; --i)
-	{
-		cout << i <<'(' << res.blocks[i] << ')';
-	}
-	cout << endl;*/
 	return res;
 }
 
@@ -919,34 +916,171 @@ number readNum(string numb, bool &error)
 	
 }
 
-void printNum(number numb)
+void printNum(number numb, ostream &stream)
 {
 	/*
 	 * Функция вывода числа
 	*/
-	cout << (numb.sign ? '-' : '+');
+	if ((numb.fact.count == 1) && (numb.inter.count == 1) && (numb.sign)) // проверка -0.0
+	{
+		block_t zero = "";
+		blockZerosL(zero);
+		block_t buf;
+		strcpy(buf, numb.inter.blocks[0]);
+		blockZerosL(buf);
+		
+		bool ind = true;
+		for (int i = 0; i <= BLOCK_LENGTH; ++i) {
+			if (buf[i] != zero[i])
+			{
+				ind = false;
+				break;
+			}
+		}
+		if (ind)
+		{
+			strcpy(buf, numb.fact.blocks[0]);
+			blockZerosL(buf);
+			ind = true;
+			for (int i = 0; i <= BLOCK_LENGTH; ++i) {
+				if (buf[i] != zero[i])
+				{
+					ind = false;
+					break;
+				}
+			}
+			if (ind)
+			{
+				numb.sign = false;
+			}
+		}
+	}
+	
+	stream << (numb.sign ? '-' : '\0');
 	// cout << numb.inter.count << '/';
 	for (int i = numb.inter.count-1; i >= 0 ; --i)
 	{
-		cout << i << '(' << numb.inter.blocks[i] << ')';
+		stream << numb.inter.blocks[i];
+		//cout << i << '(' << numb.inter.blocks[i] << ')';
 	}
-	cout << '.';
+	stream << '.';
 	// cout << numb.fact.count << '/';
 	for (int i = 0 ; i <= numb.fact.count-1 ; ++i)
 	{
-		cout << i << '(' << numb.fact.blocks[i] << ')';
+		stream << numb.fact.blocks[i];
+		//cout << i << '(' << numb.fact.blocks[i] << ')';
 	}
-	cout  << endl;
+	stream  << endl;
 	
-	//TODO убрать дебаг
+	
 }
-
 
 #pragma endregion number_functions
 
 
-int main() {
+int calc()
+{
 	ifstream inpFile;
+	inpFile.open(INPUT_FILE_NAME);
+	
+	if (!inpFile.is_open())
+	{
+		cerr << "ERROR: Файл не открыт" << endl;
+		return 1;
+	}
+	
+	string line;
+	bool Err;
+	number numbBuf;
+	number numberCur;
+	number res;
+	bool sign;
+	
+	if (not inpFile.eof())
+	{
+		getline(inpFile, line, '\n');
+		// cout << '"' << line << '"' << endl;
+		numbBuf = readNum(line, Err);
+		if (Err)
+		{
+			cerr << "ERROR: Неверно задано число" << endl;
+			return 1;
+		}
+	}
+	else
+	{
+		cerr << "ERROR: Файл пуст" << endl;
+		return 1;
+	}
+	while (!inpFile.eof())
+	{
+		getline(inpFile, line, '\n');
+		if ((line == "+") || (line == "-"))
+		{
+			if (line == "+")
+			{
+				sign = true;
+			}
+			else
+			{
+				sign = false;
+			}
+			if (!inpFile.eof())
+			{
+				getline(inpFile, line, '\n');
+				numberCur = readNum(line, Err);
+				if (Err)
+				{
+					cerr << "ERROR: Неверно задано число" << endl;
+					return 1;
+				}
+				if (sign)
+				{
+					res = addNum(numbBuf, numberCur, Err);
+				}
+				else
+				{
+					res = subNum(numbBuf, numberCur, Err);
+				}
+				if (Err)
+				{
+					return 1;
+				}
+				cout << "1: ";
+				printNum(numbBuf, cout);
+				cout << "2: ";
+				printNum(numberCur, cout);
+				cout << "res: ";
+				printNum(res, cout);
+				numbBuf = res;
+			}
+			else
+			{
+				cerr << "ERROR: В файле недостаточно данных" << endl;
+				return 1;
+			}
+			
+		}
+		else
+		{
+			cerr << "ERROR: Знак не распознан" << endl;
+			return 1;
+		}
+	}
+	inpFile.close();
+	
+	ofstream oupFile;
+	oupFile.open(OUTPUT_FILE_NAME);
+	printNum(res, oupFile);
+	
+	oupFile.close();
+	
+	return 0;
+}
+
+
+int main() {
+	/*ifstream inpFile;
 	inpFile.open(INPUT_FILE_NAME);
 	
 	string line;
@@ -955,23 +1089,26 @@ int main() {
 	
 	number n;
 	number nn;
-	
 	number r;
 	cout << "Ваша версия страндарта языка: " << __cplusplus << endl;
 	
-	n = readNum("0.0", error);
-	nn = readNum("0.0", error);
+	block_t a = "0";
+	block_t b = "0\0\0\3";
+	
+	
+	n = readNum("-0.1", error);
+	nn = readNum("-0.1", error);
 	error = false;
-	/*
+	 
 	 * max 4 * 10 | 16
 	 * FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	 * FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 	 *
 	 * 1..0 4 * 10 | 16
 	 * 1000000000000000000000000000000000000000.0
-	 * */
+	 *
 	
-	r = addNum(n, nn);
+	r = subNum(n, nn);
 	
 	printNum(n);
 	printNum(nn);
@@ -983,5 +1120,8 @@ int main() {
 	
 	
 	inpFile.close();
-	return 0;
+	*/
+	
+	int code = calc();
+	return code;
 }
