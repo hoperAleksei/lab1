@@ -557,6 +557,9 @@ bool compareNumbers(number a, number b)
 	 * Сравнивает модули чисел a и b, если a > b возвращает true
 	*/
 	
+	block_t buf1;
+	block_t buf2;
+	
 	if (a.inter.count > b.inter.count)
 	{
 		return true;
@@ -569,11 +572,15 @@ bool compareNumbers(number a, number b)
 	{
 		for (int i = a.inter.count-1; i >= 0; --i)
 		{
-			if (compareBlocks(a.inter.blocks[i], b.inter.blocks[i]))
+			strcpy(buf1, a.inter.blocks[i]);
+			strcpy(buf2, b.inter.blocks[i]);
+			blockZerosL(buf1);
+			blockZerosL(buf2);
+			if (compareBlocks(buf1, buf2))
 			{
 				return true;
 			}
-			else if (compareBlocks(b.inter.blocks[i], a.inter.blocks[i]))
+			else if (compareBlocks(buf2, buf1))
 			{
 				return false;
 			}
@@ -995,10 +1002,12 @@ int calc()
 	number numberCur;
 	number res;
 	bool sign;
+	int count = 0;
 	
 	if (not inpFile.eof())
 	{
 		getline(inpFile, line, '\n');
+		++count;
 		// cout << '"' << line << '"' << endl;
 		numbBuf = readNum(line, Err);
 		if (Err)
@@ -1012,9 +1021,10 @@ int calc()
 		cerr << "ERROR: Файл пуст" << endl;
 		return 1;
 	}
-	while (!inpFile.eof())
+	while (!inpFile.eof() && (count <= LINE_COUNT))
 	{
 		getline(inpFile, line, '\n');
+		++count;
 		if ((line == "+") || (line == "-"))
 		{
 			if (line == "+")
@@ -1028,6 +1038,7 @@ int calc()
 			if (!inpFile.eof())
 			{
 				getline(inpFile, line, '\n');
+				++count;
 				numberCur = readNum(line, Err);
 				if (Err)
 				{
@@ -1050,8 +1061,10 @@ int calc()
 				printNum(numbBuf, cout);
 				cout << "2: ";
 				printNum(numberCur, cout);
+				cout << "op: " << (sign ? "+" : "-") << endl;
 				cout << "res: ";
 				printNum(res, cout);
+				
 				numbBuf = res;
 			}
 			else
@@ -1066,6 +1079,12 @@ int calc()
 			cerr << "ERROR: Знак не распознан" << endl;
 			return 1;
 		}
+	}
+	
+	if (!inpFile.eof())
+	{
+		cerr << "ERROR: Строк больше необходимого" << endl;
+		return 1;
 	}
 	inpFile.close();
 	
