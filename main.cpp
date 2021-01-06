@@ -492,6 +492,7 @@ partOfNum subFact(partOfNum min, partOfNum sub, bool &transfer)
 			blockZerosR(sub.blocks[i]);
 			blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
 			strcpy(res.blocks[i], buf);
+			--i;
 		}
 		res.count = min.count;
 	}
@@ -510,7 +511,7 @@ partOfNum subFact(partOfNum min, partOfNum sub, bool &transfer)
 		strcpy(res.blocks[i], buf);
 		res.count = sub.count;
 	}
-	--i;
+	//--i; //todo
 	for (; i >= 0; --i) // вычитание полных блоков
 	{
 		blockSub(min.blocks[i], sub.blocks[i], transfer, buf);
